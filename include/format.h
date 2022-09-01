@@ -3,8 +3,10 @@
 
 #include <string>
 
-namespace Format {
-std::string ElapsedTime(long times);  // TODO: See src/format.cpp
-};                                    // namespace Format
+namespace Format
+{
+std::string ElapsedTime(long times); // TODO: See src/format.cpp
+std::string GetFormattedTime(long secs);
+}; // namespace Format
 
 #endif
