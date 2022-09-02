@@ -13,31 +13,6 @@ using std::string;
 using std::to_string;
 using std::vector;
 
-// Maig recursive variadic function got from: https://stackoverflow.com/a/26080768
-// clang-format off
-template <typename T>
-void MagicRead(std::istringstream& i, T &t)
-{
-    i >> t;
-}
-
-template<typename T, typename... Args>
-void MagicRead(std::istringstream& i, T &t, Args &&... args) // recursive variadic function
-{
-    MagicRead(i, t);
-    MagicRead(i, args...);
-}
-
-template<typename... Args>
-void ReadLine(std::ifstream &file, Args &&... args)
-{
-    string line;
-    std::getline(file, line);
-    std::istringstream linestream(line);
-    MagicRead(linestream, args...);
-}
-// clang-format on
-
 // DONE: An example of how to read data from the filesystem
 string LinuxParser::OperatingSystem()
 {
@@ -71,12 +46,8 @@ string LinuxParser::Kernel()
 {
     if (KERNEL.empty())
     {
-        string os, version;
-        std::ifstream stream(kProcDirectory + kVersionFilename);
-        if (stream.is_open())
-        {
-            ReadLine(stream, os, version, KERNEL);
-        }
+        std::string foo;
+        from[kProcDirectory + kVersionFilename].ReadLine(foo, foo, KERNEL).update();
     }
     return KERNEL;
 }
@@ -111,22 +82,14 @@ float LinuxParser::MemoryUtilization()
     string tag, unit;
     int num;
     int mem_free, mem_total;
-    std::ifstream stream(kProcDirectory + kMeminfoFilename);
-    if (stream.is_open())
-    {
 
-        ReadLine(stream, tag, num, unit);
-        assert(tag.compare("MemTotal:") == 0);
-        mem_total = num;
+    from[kProcDirectory + kMeminfoFilename].ReadLine(tag, num, unit);
+    assert(tag.compare("MemTotal:") == 0);
+    mem_total = num;
 
-        ReadLine(stream, tag, num, unit);
-        assert(tag.compare("MemFree:") == 0);
-        mem_free = num;
-    }
-    else
-    {
-        assert(false);
-    }
+    from[kProcDirectory + kMeminfoFilename].ReadLine(tag, num, unit).update();
+    assert(tag.compare("MemFree:") == 0);
+    mem_free = num;
 
     return (mem_total - mem_free) / 0x1000000;
 }
@@ -135,88 +98,112 @@ long LinuxParser::UpTime()
 {
     long secs_up, secs_idle;
 
-    std::ifstream stream(kProcDirectory + kUptimeFilename);
-    if (stream.is_open())
-    {
-        ReadLine(stream, secs_up, secs_idle);
-    }
+    from[kProcDirectory + kUptimeFilename].ReadLine(secs_up, secs_idle).update();
+
     return secs_up;
 }
 
-// TODO: Read and return the number of jiffies for the system
 long LinuxParser::Jiffies()
 {
-    return UpTime() * Hz();
+    return UpTime() / TICK;
 }
 
-// TODO: Read and return the number of active jiffies for a PID
+// Calculation based on: https://stackoverflow.com/a/23376195
 long LinuxParser::ActiveJiffies(int pid)
 {
+    long user_jiffies, kernel_jiffies;
+    string foo_str;
 
-    return 0;
+    from[kProcDirectory + "/" + std::to_string(pid) + kStatFilename]
+        .ReadLine(foo_str, foo_str, foo_str, foo_str, foo_str, foo_str, foo_str, foo_str, foo_str, foo_str, foo_str,
+                  foo_str, foo_str, user_jiffies, kernel_jiffies)
+        .update();
+
+    return user_jiffies + kernel_jiffies;
 }
 
-// TODO: Read and return the number of active jiffies for the system
+// Calculation based on: https://stackoverflow.com/a/23376195
 long LinuxParser::ActiveJiffies()
 {
-    return 0;
+    int user, nice, system, irq, softirq, steal, foo;
+    string cpu_name;
+
+    from[kProcDirectory + kStatFilename].ReadLine(cpu_name, user, nice, system, foo, foo, irq, softirq, steal).update();
+
+    return user + nice + system + irq + softirq + steal;
 }
 
-// TODO: Read and return the number of idle jiffies for the system
+// Calculation based on: https://stackoverflow.com/a/23376195
 long LinuxParser::IdleJiffies()
 {
-    return 0;
+    int idle, iowait, foo;
+    string cpu_name;
+
+    from[kProcDirectory + kStatFilename].ReadLine(cpu_name, foo, foo, foo, idle, iowait).update();
+
+    return idle + iowait;
 }
 
-// TODO: Read and return CPU utilization
-vector<string> LinuxParser::CpuUtilization()
+vector<string> LinuxParser::CpuUtilization(int n)
 {
-    return {};
+    std::string line, aux;
+    std::vector<string> utilization;
+    std::ifstream stream(kProcDirectory + kStatFilename);
+    if (stream.is_open())
+    {
+        for (int i = 0; i < n; ++i)
+        {
+            std::getline(stream, line);
+        }
+
+        size_t index = string::npos;
+        std::getline(stream, line);
+        while (string::npos != (index = line.find(" ")))
+        {
+            utilization.push_back(line.substr(0, index));
+            line.erase(0, index + 1); // 1 == " "
+        }
+    }
+
+    return utilization;
 }
 
-// TODO: Read and return the total number of processes
 int LinuxParser::TotalProcesses()
 {
-    return 0;
+    return static_cast<int>(Pids().size());
 }
 
-// TODO: Read and return the number of running processes
 int LinuxParser::RunningProcesses()
 {
     return 0;
 }
 
 // TODO: Read and return the command associated with a process
-// REMOVE: [[maybe_unused]] once you define the function
-string LinuxParser::Command(int pid [[maybe_unused]])
+string LinuxParser::Command(int pid)
 {
     return string();
 }
 
 // TODO: Read and return the memory used by a process
-// REMOVE: [[maybe_unused]] once you define the function
-string LinuxParser::Ram(int pid [[maybe_unused]])
+string LinuxParser::Ram(int pid)
 {
     return string();
 }
 
 // TODO: Read and return the user ID associated with a process
-// REMOVE: [[maybe_unused]] once you define the function
-string LinuxParser::Uid(int pid [[maybe_unused]])
+string LinuxParser::Uid(int pid)
 {
     return string();
 }
 
 // TODO: Read and return the user associated with a process
-// REMOVE: [[maybe_unused]] once you define the function
-string LinuxParser::User(int pid [[maybe_unused]])
+string LinuxParser::User(int pid)
 {
     return string();
 }
 
 // TODO: Read and return the uptime of a process
-// REMOVE: [[maybe_unused]] once you define the function
-long LinuxParser::UpTime(int pid [[maybe_unused]])
+long LinuxParser::UpTime(int pid)
 {
     return 0;
 }

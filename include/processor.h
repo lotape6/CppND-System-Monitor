@@ -14,6 +14,7 @@ class Processor
     }
 
     float Utilization();
+    float TotalJiffies();
 
     void UpdateRawData(int, int, int, int, int, int, int, int, int, int);
 
