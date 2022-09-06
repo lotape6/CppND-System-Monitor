@@ -1,5 +1,6 @@
 #include <unistd.h>
 
+#include <assert.h>
 #include <cstddef>
 #include <set>
 #include <string>
@@ -22,7 +23,8 @@ format. cpp for formatting the uptime.*/
 
 Processor &System::Cpu(uint8_t n)
 {
-    return n < cpus_.size() ? cpus_[n] : Cpu();
+    assert(cpus_.size() > 0);
+    return cpus_.at(n);
 }
 
 vector<Process> &System::Processes()

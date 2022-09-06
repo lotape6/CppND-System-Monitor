@@ -21,7 +21,7 @@ float Processor::Utilization()
     const int total_diff = total - (prev_idle_ + prev_non_idle_);
     const int idle_diff = actual_idle_ - prev_idle_;
 
-    return (total_diff - idle_diff) / total_diff;
+    return static_cast<float>(total_diff - idle_diff) / static_cast<float>(total_diff);
 }
 
 void Processor::UpdateRawData(int user, int nice, int system, int idle, int iowait, int irq, int softirq, int steal,
