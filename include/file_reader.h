@@ -40,7 +40,7 @@ class FileReader
     FileReader(std::string file);
 
     // Reset fstream state found on:https://stackoverflow.com/a/7681612
-    void update();
+    FileReader &update();
 
     std::ifstream &operator()();
     bool isReady();

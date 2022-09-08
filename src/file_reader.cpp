@@ -15,10 +15,11 @@ FileReader::FileReader(std::string file) : file_path_(file), file_stream_(file_p
 }
 
 // Reset fstream state found on:https://stackoverflow.com/a/7681612
-void FileReader::update()
+FileReader &FileReader::update()
 {
     file_stream_.clear();
     file_stream_.seekg(0, std::ios::beg);
+    return *this;
 }
 
 std::ifstream &FileReader::operator()()
