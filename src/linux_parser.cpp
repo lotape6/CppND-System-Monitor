@@ -91,7 +91,7 @@ float LinuxParser::MemoryUtilization()
     assert(tag.compare("MemFree:") == 0);
     mem_free = num;
 
-    return (mem_total - mem_free) / 0x1000000;
+    return (mem_total - mem_free) / static_cast<float>(0x1000000);
 }
 
 long LinuxParser::UpTime()
@@ -112,11 +112,10 @@ long LinuxParser::Jiffies()
 long LinuxParser::ActiveJiffies(int pid)
 {
     long user_jiffies, kernel_jiffies;
-    string foo_str;
+    string foo;
 
     from[kProcDirectory + "/" + std::to_string(pid) + kStatFilename]
-        .ReadLine(foo_str, foo_str, foo_str, foo_str, foo_str, foo_str, foo_str, foo_str, foo_str, foo_str, foo_str,
-                  foo_str, foo_str, user_jiffies, kernel_jiffies)
+        .ReadLine(foo, foo, foo, foo, foo, foo, foo, foo, foo, foo, foo, foo, foo, user_jiffies, kernel_jiffies)
         .update();
 
     return user_jiffies + kernel_jiffies;
@@ -175,37 +174,76 @@ int LinuxParser::TotalProcesses()
 
 int LinuxParser::RunningProcesses()
 {
-    return 0;
+    int running_procs = 0;
+    std::string foo, status, file_path;
+
+    for (auto &pid : Pids())
+    {
+        file_path = kProcDirectory + "/" + std::to_string(pid) + kStatusFilename;
+        from[file_path].update().ReadLines(2).ReadLine(foo, status, foo);
+        running_procs += status == "R" ? 1 : 0;
+    }
+    return running_procs;
 }
 
-// TODO: Read and return the command associated with a process
 string LinuxParser::Command(int pid)
 {
-    return string();
+    std::string file_path, cmdline;
+    file_path = kProcDirectory + "/" + std::to_string(pid) + kCmdlineFilename;
+    from[file_path].update().ReadLine(cmdline);
+    return cmdline;
 }
 
-// TODO: Read and return the memory used by a process
+// Got from https://unix.stackexchange.com/questions/224015/memory-usage-of-a-given-process-using-linux-proc-filesystem
 string LinuxParser::Ram(int pid)
 {
-    return string();
+    std::string file_path, foo, ram, units;
+    file_path = kProcDirectory + "/" + std::to_string(pid) + KSmapsFilename;
+    from[file_path].update().ReadLines(1).ReadLine(foo, ram, units);
+
+    return ram + " " + units;
 }
 
-// TODO: Read and return the user ID associated with a process
 string LinuxParser::Uid(int pid)
 {
-    return string();
+    std::string file_path, foo, uid;
+    file_path = kProcDirectory + "/" + std::to_string(pid) + kStatusFilename;
+    from[file_path].update().ReadLines(8).ReadLine(foo, uid);
+
+    return uid;
 }
 
-// TODO: Read and return the user associated with a process
 string LinuxParser::User(int pid)
 {
-    return string();
+    return UserFromId(Uid(pid));
 }
 
-// TODO: Read and return the uptime of a process
+// String splitting got from: https://stackoverflow.com/a/10058725
+string LinuxParser::UserFromId(std::string userid)
+{
+    std::string user, uid, foo;
+
+    user = "";
+    uid = "";
+    auto &pass_file = from[kPasswordPath].update();
+    do
+    {
+        pass_file.ReadLine(foo);
+        std::stringstream line(foo);
+        std::getline(line, user, ':');
+        std::getline(line, foo, ':');
+        std::getline(line, uid, ':');
+
+    } while (uid != userid);
+
+    return user;
+}
+
 long LinuxParser::UpTime(int pid)
 {
-    return 0;
+    long jiffies = ActiveJiffies(pid);
+
+    return jiffies / TICK;
 }
 
 int LinuxParser::Hz()

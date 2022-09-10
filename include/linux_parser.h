@@ -13,6 +13,7 @@ const std::string kCmdlineFilename{"/cmdline"};
 const std::string kCpuinfoFilename{"/cpuinfo"};
 const std::string kStatusFilename{"/status"};
 const std::string kStatFilename{"/stat"};
+const std::string KSmapsFilename{"/smaps"};
 const std::string kUptimeFilename{"/uptime"};
 const std::string kMeminfoFilename{"/meminfo"};
 const std::string kVersionFilename{"/version"};
@@ -23,7 +24,7 @@ const std::string kConfig{"/config-"};
 
 class LinuxParser
 {
-
+  public:
     const long TICK = sysconf(_SC_CLK_TCK);
 
     // System
@@ -61,6 +62,7 @@ class LinuxParser
     std::string Ram(int pid);
     std::string Uid(int pid);
     std::string User(int pid);
+    std::string UserFromId(std::string userid);
     long int UpTime(int pid);
 
     std::string KERNEL;

@@ -25,6 +25,7 @@ class utLinuxParser : public ::testing::Test
 
   protected:
     FilesDictionary test_from;
+    LinuxParser lp;
 };
 
 TEST_F(utLinuxParser, testReadNewEntry)
@@ -63,8 +64,26 @@ TEST_F(utLinuxParser, testReadWhileFileChanges)
     test_from[test_file].ReadLine(foostr1, fooint1);
 
     writeFile(test_file, foo_content2);
-    test_from[test_file].top().ReadLine(foostr2, fooint2);
+    test_from[test_file].update().ReadLine(foostr2, fooint2);
 
-    EXPECT_EQ(foostr1, foostr2);
-    EXPECT_EQ(fooint1, fooint2);
+    EXPECT_NE(foostr1, foostr2);
+    EXPECT_NE(fooint1, fooint2);
+}
+
+TEST_F(utLinuxParser, testReadUser)
+{
+    const std::string dummyProc{dummyPrefix + kProcDirectory + kStatFilename};
+
+    std::string lotape = lp.UserFromId("1000");
+
+    EXPECT_EQ(lotape, "lotape6");
+}
+
+TEST_F(utLinuxParser, DISABLED_testUid)
+{
+    const std::string dummyProc{dummyPrefix + kProcDirectory + kStatFilename};
+
+    std::string lotape = lp.Uid(5657); // Harcoded PID :)
+
+    EXPECT_EQ(lotape, "1000");
 }

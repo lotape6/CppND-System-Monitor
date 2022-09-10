@@ -59,6 +59,7 @@ class FileReader
         }
         return *this;
     }
+    FileReader &ReadLines(int n_lines);
 
   private:
     std::string file_path_;

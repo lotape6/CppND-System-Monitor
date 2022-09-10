@@ -36,6 +36,17 @@ FilesDictionary::FilesDictionary()
 {
 }
 
+FileReader &FileReader::ReadLines(int n_lines)
+{
+    std::string line;
+    for (auto i = 0; i < n_lines; ++i)
+    {
+        std::getline(file_stream_, line);
+    }
+
+    return *this;
+}
+
 FileReader &FilesDictionary::operator[](std::string file_path)
 {
     auto pos = dict_.find(file_path);
