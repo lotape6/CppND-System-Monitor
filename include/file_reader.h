@@ -55,7 +55,7 @@ class FileReader
         }
         else
         {
-            assert(false);
+            // assert(false);
         }
         return *this;
     }

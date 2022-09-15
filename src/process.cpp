@@ -1,7 +1,7 @@
-#include <unistd.h>
 #include <cctype>
 #include <sstream>
 #include <string>
+#include <unistd.h>
 #include <vector>
 
 #include "process.h"
@@ -10,24 +10,47 @@ using std::string;
 using std::to_string;
 using std::vector;
 
-// TODO: Return this process's ID
-int Process::Pid() { return 0; }
+Process::Process(int pid) : pid_(pid)
+{
+}
 
-// TODO: Return this process's CPU utilization
-float Process::CpuUtilization() { return 0; }
+int Process::Pid()
+{
+    return pid_;
+}
 
-// TODO: Return the command that generated this process
-string Process::Command() { return string(); }
+// Got from suggested SO answer: https://stackoverflow.com/a/16736599
+float Process::CpuUtilization()
+{
+    long activeJiffies = parser_.ActiveJiffies(pid_);
+    float Hz = static_cast<float>(parser_.Hz());
+    long uptime = parser_.UpTime();
 
-// TODO: Return this process's memory utilization
-string Process::Ram() { return string(); }
+    cached_cpu = 100 * (static_cast<float>(activeJiffies / Hz) / uptime);
+    return cached_cpu;
+}
 
-// TODO: Return the user (name) that generated this process
-string Process::User() { return string(); }
+string Process::Command()
+{
+    return parser_.Command(pid_);
+}
 
-// TODO: Return the age of this process (in seconds)
-long int Process::UpTime() { return 0; }
+string Process::Ram()
+{
+    return parser_.Ram(pid_);
+}
 
-// TODO: Overload the "less than" comparison operator for Process objects
-// REMOVE: [[maybe_unused]] once you define the function
-bool Process::operator<(Process const& a[[maybe_unused]]) const { return true; }
+string Process::User()
+{
+    return parser_.User(pid_);
+}
+
+long int Process::UpTime()
+{
+    return parser_.UpTime(pid_);
+}
+
+bool Process::operator<(Process const &a) const
+{
+    return (cached_cpu < a.cached_cpu);
+}

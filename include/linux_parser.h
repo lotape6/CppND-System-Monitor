@@ -69,6 +69,6 @@ class LinuxParser
     int HZ;
 
     FilesDictionary from;
-}; // namespace LinuxParser
+};
 
 #endif

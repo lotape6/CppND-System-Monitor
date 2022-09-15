@@ -259,4 +259,5 @@ int LinuxParser::Hz()
             std::istringstream(line) >> id >> HZ;
         }
     }
+    return HZ;
 }

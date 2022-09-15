@@ -14,12 +14,22 @@ using std::set;
 using std::size_t;
 using std::string;
 using std::vector;
-/*You need to complete the mentioned TODOs in order to satisfy the rubric
-criteria "The student will be able to extract and display basic data about the
-system."
 
-You need to properly format the uptime. Refer to the comments mentioned in
-format. cpp for formatting the uptime.*/
+System::System(int n_proc)
+{
+    ++n_proc; // +1 due to the average
+    for (int i = 0; i < n_proc; i++)
+    {
+        cpus_.emplace_back(i);
+    }
+
+    std::vector<int> processes_pids = parser_.Pids();
+
+    for (auto pid : processes_pids)
+    {
+        processes_.emplace_back(pid);
+    }
+}
 
 Processor &System::Cpu(uint8_t n)
 {
@@ -32,38 +42,32 @@ vector<Process> &System::Processes()
     return processes_;
 }
 
-// TODO: Return the system's kernel identifier (string)
 std::string System::Kernel()
 {
-    return string();
+    return parser_.Kernel();
 }
 
-// TODO: Return the system's memory utilization
 float System::MemoryUtilization()
 {
-    return 0.0;
+    return parser_.MemoryUtilization();
 }
 
-// TODO: Return the operating system name
 std::string System::OperatingSystem()
 {
-    return string();
+    return parser_.OperatingSystem();
 }
 
-// TODO: Return the number of processes actively running on the system
 int System::RunningProcesses()
 {
-    return 0;
+    return parser_.RunningProcesses();
 }
 
-// TODO: Return the total number of processes on the system
 int System::TotalProcesses()
 {
-    return 0;
+    return parser_.TotalProcesses();
 }
 
-// TODO: Return the number of seconds since the system started running
 long int System::UpTime()
 {
-    return 0;
+    return parser_.UpTime();
 }
