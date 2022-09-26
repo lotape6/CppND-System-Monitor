@@ -47,7 +47,7 @@ string LinuxParser::Kernel()
     if (KERNEL.empty())
     {
         std::string foo;
-        from[kProcDirectory + kVersionFilename].ReadLine(foo, foo, KERNEL).update();
+        from[kProcDirectory + kVersionFilename].update().ReadLine(foo, foo, KERNEL);
     }
     return KERNEL;
 }
@@ -83,12 +83,10 @@ float LinuxParser::MemoryUtilization()
     int num;
     int mem_free, mem_total;
 
-    from[kProcDirectory + kMeminfoFilename].ReadLine(tag, num, unit);
-    assert(tag.compare("MemTotal:") == 0);
+    from[kProcDirectory + kMeminfoFilename].update().ReadLine(tag, num, unit);
     mem_total = num;
 
-    from[kProcDirectory + kMeminfoFilename].ReadLine(tag, num, unit).update();
-    assert(tag.compare("MemFree:") == 0);
+    from[kProcDirectory + kMeminfoFilename].ReadLine(tag, num, unit);
     mem_free = num;
 
     return (mem_total - mem_free) / static_cast<float>(0x1000000);
@@ -98,9 +96,9 @@ long LinuxParser::UpTime()
 {
     long secs_up, secs_idle;
 
-    from[kProcDirectory + kUptimeFilename].ReadLine(secs_up, secs_idle).update();
+    from[kProcDirectory + kUptimeFilename].update().ReadLine(secs_up, secs_idle);
 
-    return secs_up;
+    return secs_up + secs_idle;
 }
 
 long LinuxParser::Jiffies()
@@ -114,9 +112,8 @@ long LinuxParser::ActiveJiffies(int pid)
     long user_jiffies, kernel_jiffies;
     string foo;
 
-    from[kProcDirectory + "/" + std::to_string(pid) + kStatFilename]
-        .ReadLine(foo, foo, foo, foo, foo, foo, foo, foo, foo, foo, foo, foo, foo, user_jiffies, kernel_jiffies)
-        .update();
+    from[kProcDirectory + "/" + std::to_string(pid) + kStatFilename].update().ReadLine(
+        foo, foo, foo, foo, foo, foo, foo, foo, foo, foo, foo, foo, foo, user_jiffies, kernel_jiffies);
 
     return user_jiffies + kernel_jiffies;
 }
@@ -124,10 +121,10 @@ long LinuxParser::ActiveJiffies(int pid)
 // Calculation based on: https://stackoverflow.com/a/23376195
 long LinuxParser::ActiveJiffies()
 {
-    int user, nice, system, irq, softirq, steal, foo;
+    long user, nice, system, irq, softirq, steal, foo;
     string cpu_name;
 
-    from[kProcDirectory + kStatFilename].ReadLine(cpu_name, user, nice, system, foo, foo, irq, softirq, steal).update();
+    from[kProcDirectory + kStatFilename].update().ReadLine(cpu_name, user, nice, system, foo, foo, irq, softirq, steal);
 
     return user + nice + system + irq + softirq + steal;
 }
@@ -138,31 +135,21 @@ long LinuxParser::IdleJiffies()
     int idle, iowait, foo;
     string cpu_name;
 
-    from[kProcDirectory + kStatFilename].ReadLine(cpu_name, foo, foo, foo, idle, iowait).update();
+    from[kProcDirectory + kStatFilename].update().ReadLine(cpu_name, foo, foo, foo, idle, iowait);
 
     return idle + iowait;
 }
 
-vector<string> LinuxParser::CpuUtilization(int n)
+vector<int> LinuxParser::CpuUtilization(int n)
 {
-    std::string line, aux;
-    std::vector<string> utilization;
-    std::ifstream stream(kProcDirectory + kStatFilename);
-    if (stream.is_open())
-    {
-        for (int i = 0; i < n; ++i)
-        {
-            std::getline(stream, line);
-        }
+    std::string cpu_id;
+    int user, nice, system, idle, iowait, irq, softirq, steal, guest, guest_nice;
+    std::string filename(kProcDirectory + kStatFilename);
 
-        size_t index = string::npos;
-        std::getline(stream, line);
-        while (string::npos != (index = line.find(" ")))
-        {
-            utilization.push_back(line.substr(0, index));
-            line.erase(0, index + 1); // 1 == " "
-        }
-    }
+    from[filename].ReadLines(n);
+
+    from[filename].ReadLine(cpu_id, user, nice, system, idle, iowait, irq, softirq, steal, guest, guest_nice).update();
+    std::vector<int> utilization = {user, nice, system, idle, iowait, irq, softirq, steal, guest, guest_nice};
 
     return utilization;
 }
@@ -243,7 +230,7 @@ long LinuxParser::UpTime(int pid)
 {
     long jiffies = ActiveJiffies(pid);
 
-    return jiffies / TICK;
+    return jiffies / Hz();
 }
 
 int LinuxParser::Hz()

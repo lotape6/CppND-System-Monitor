@@ -10,7 +10,7 @@ using std::string;
 using std::to_string;
 using std::vector;
 
-Process::Process(int pid) : pid_(pid)
+Process::Process(int pid) : cached_cpu(-1.), pid_(pid)
 {
 }
 
@@ -23,8 +23,8 @@ int Process::Pid()
 float Process::CpuUtilization()
 {
     long activeJiffies = parser_.ActiveJiffies(pid_);
-    float Hz = static_cast<float>(parser_.Hz());
     long uptime = parser_.UpTime();
+    float Hz = static_cast<float>(parser_.Hz());
 
     cached_cpu = 100 * (static_cast<float>(activeJiffies / Hz) / uptime);
     return cached_cpu;
@@ -52,5 +52,12 @@ long int Process::UpTime()
 
 bool Process::operator<(Process const &a) const
 {
-    return (cached_cpu < a.cached_cpu);
+    if (cached_cpu != -1 && a.cached_cpu != -1)
+    {
+        return (cached_cpu < a.cached_cpu);
+    }
+    else
+    {
+        return false;
+    }
 }

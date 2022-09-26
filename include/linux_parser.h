@@ -50,7 +50,7 @@ class LinuxParser
         kGuest_,
         kGuestNice_
     };
-    std::vector<std::string> CpuUtilization(int n = 0);
+    std::vector<int> CpuUtilization(int n = 0);
     long Jiffies();
     long ActiveJiffies();
     long ActiveJiffies(int pid);

@@ -1,6 +1,7 @@
 #include "../include/file_reader.h"
 #include "../include/linux_parser.h"
 #include "gtest/gtest.h"
+#include <cmath>
 #include <fstream>
 #include <iostream>
 #include <optional>
@@ -86,4 +87,27 @@ TEST_F(utLinuxParser, DISABLED_testUid)
     std::string lotape = lp.Uid(5657); // Harcoded PID :)
 
     EXPECT_EQ(lotape, "1000");
+}
+
+TEST_F(utLinuxParser, testCpuUtilization)
+{
+    std::string cpu_id;
+    int user, nice, system, idle, iowait, irq, softirq, steal, guest, guest_nice;
+
+    const std::string dummyProcStat{dummyPrefix + kProcDirectory + kStatFilename};
+    test_from[dummyProcStat].ReadLines(0);
+    test_from[dummyProcStat].ReadLine(cpu_id, user, nice, system, idle, iowait, irq, softirq, steal, guest, guest_nice);
+
+    int prev_idle = 290665 + 1076; // 200 less than actual idle
+    int actual_idle = idle + iowait;
+
+    int prev_non_idle = 13566 + 583 + 5308 + 26; // 300 less than actual non idle
+    int acutal_non_idle = user + nice + system + irq + softirq + steal;
+
+    const int total = actual_idle + acutal_non_idle;
+    const int total_diff = total - (prev_idle + prev_non_idle);
+    const int idle_diff = actual_idle - prev_idle;
+
+    float utilization = static_cast<float>(total_diff - idle_diff) / static_cast<float>(total_diff);
+    EXPECT_TRUE(std::fabs(0.6 - utilization) < 0.01);
 }

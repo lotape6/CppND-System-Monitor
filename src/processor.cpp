@@ -11,6 +11,8 @@ Processor::Processor(int processor_number)
 // Calculation based on: https://stackoverflow.com/a/23376195
 float Processor::Utilization()
 {
+    UpdateRawData(parser_.CpuUtilization(processor_number_));
+
     prev_idle_ = actual_idle_;
     actual_idle_ = idle_ + iowait_;
 
@@ -24,19 +26,18 @@ float Processor::Utilization()
     return static_cast<float>(total_diff - idle_diff) / static_cast<float>(total_diff);
 }
 
-void Processor::UpdateRawData(int user, int nice, int system, int idle, int iowait, int irq, int softirq, int steal,
-                              int guest, int guest_nice)
+void Processor::UpdateRawData(std::vector<int> in_vector)
 {
     std::swap(prev_raw_data_, raw_data_);
 
-    raw_data_[0] = user;
-    raw_data_[1] = nice;
-    raw_data_[2] = system;
-    raw_data_[3] = idle;
-    raw_data_[4] = iowait;
-    raw_data_[5] = irq;
-    raw_data_[6] = softirq;
-    raw_data_[7] = steal;
-    raw_data_[8] = guest;
-    raw_data_[9] = guest_nice;
+    raw_data_[0] = in_vector[0];
+    raw_data_[1] = in_vector[1];
+    raw_data_[2] = in_vector[2];
+    raw_data_[3] = in_vector[3];
+    raw_data_[4] = in_vector[4];
+    raw_data_[5] = in_vector[5];
+    raw_data_[6] = in_vector[6];
+    raw_data_[7] = in_vector[7];
+    raw_data_[8] = in_vector[8];
+    raw_data_[9] = in_vector[9];
 }

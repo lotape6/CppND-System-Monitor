@@ -7,7 +7,7 @@ using std::string;
 
 string Format::GetFormattedTime(long secs)
 {
-    string time = "HH:MM:SS";
+    string time;
 
     int hours = static_cast<int>(floor(secs / 3600.));
     secs -= hours * 3600;
@@ -15,11 +15,16 @@ string Format::GetFormattedTime(long secs)
     int mins = static_cast<int>(floor(secs / 60.));
     secs -= mins * 60;
 
-    time = std::to_string(hours) + ":" + std::to_string(mins) + ":" + std::to_string(static_cast<int>(secs));
+    string sec_prefix = secs < 10 ? "0" : "";
+    string min_prefix = mins < 10 ? "0" : "";
+    string hour_prefix = hours < 10 ? "0" : "";
+
+    time = hour_prefix + std::to_string(hours) + ":" + min_prefix + std::to_string(mins) + ":" + sec_prefix +
+           std::to_string(static_cast<int>(secs));
 
     return time;
 }
-string Format::ElapsedTime(long seconds [[maybe_unused]])
+string Format::ElapsedTime(long seconds)
 {
-    return string();
+    return GetFormattedTime(seconds);
 }

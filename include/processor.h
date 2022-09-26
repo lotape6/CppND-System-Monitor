@@ -1,6 +1,7 @@
 #ifndef PROCESSOR_H
 #define PROCESSOR_H
 
+#include <linux_parser.h>
 #include <string>
 
 class Processor
@@ -16,7 +17,7 @@ class Processor
     float Utilization();
     float TotalJiffies();
 
-    void UpdateRawData(int, int, int, int, int, int, int, int, int, int);
+    void UpdateRawData(std::vector<int> in_vector);
 
   private:
     std::string id_;
@@ -40,6 +41,8 @@ class Processor
     // Calculations cache
     int actual_idle_, acutal_non_idle_;
     int prev_idle_, prev_non_idle_;
+
+    LinuxParser parser_;
 };
 
 #endif
