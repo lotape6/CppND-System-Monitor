@@ -1,2 +1,0 @@
-DummyFile2 200
-Test 2
