@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <dirent.h>
 #include <filesystem>
+#include <iostream>
 #include <sstream>
 #include <string>
 #include <unistd.h>
@@ -112,7 +113,7 @@ long LinuxParser::ActiveJiffies(int pid)
     long user_jiffies, kernel_jiffies;
     string foo;
 
-    from[kProcDirectory + "/" + std::to_string(pid) + kStatFilename].update().ReadLine(
+    from[kProcDirectory + std::to_string(pid) + kStatFilename].update().ReadLine(
         foo, foo, foo, foo, foo, foo, foo, foo, foo, foo, foo, foo, foo, user_jiffies, kernel_jiffies);
 
     return user_jiffies + kernel_jiffies;
@@ -146,9 +147,9 @@ vector<int> LinuxParser::CpuUtilization(int n)
     int user, nice, system, idle, iowait, irq, softirq, steal, guest, guest_nice;
     std::string filename(kProcDirectory + kStatFilename);
 
-    from[filename].ReadLines(n);
+    from[filename].update().ReadLines(n);
 
-    from[filename].ReadLine(cpu_id, user, nice, system, idle, iowait, irq, softirq, steal, guest, guest_nice).update();
+    from[filename].ReadLine(cpu_id, user, nice, system, idle, iowait, irq, softirq, steal, guest, guest_nice);
     std::vector<int> utilization = {user, nice, system, idle, iowait, irq, softirq, steal, guest, guest_nice};
 
     return utilization;
@@ -166,7 +167,7 @@ int LinuxParser::RunningProcesses()
 
     for (auto &pid : Pids())
     {
-        file_path = kProcDirectory + "/" + std::to_string(pid) + kStatusFilename;
+        file_path = kProcDirectory + std::to_string(pid) + kStatusFilename;
         from[file_path].update().ReadLines(2).ReadLine(foo, status, foo);
         running_procs += status == "R" ? 1 : 0;
     }
@@ -176,7 +177,7 @@ int LinuxParser::RunningProcesses()
 string LinuxParser::Command(int pid)
 {
     std::string file_path, cmdline;
-    file_path = kProcDirectory + "/" + std::to_string(pid) + kCmdlineFilename;
+    file_path = kProcDirectory + std::to_string(pid) + kCmdlineFilename;
     from[file_path].update().ReadLine(cmdline);
     return cmdline;
 }
@@ -184,17 +185,25 @@ string LinuxParser::Command(int pid)
 // Got from https://unix.stackexchange.com/questions/224015/memory-usage-of-a-given-process-using-linux-proc-filesystem
 string LinuxParser::Ram(int pid)
 {
-    std::string file_path, foo, ram, units;
+    std::string file_path, foo, units;
+    float ram;
     file_path = kProcDirectory + "/" + std::to_string(pid) + KSmapsFilename;
     from[file_path].update().ReadLines(1).ReadLine(foo, ram, units);
-
-    return ram + " " + units;
+    if (units == "kB")
+    {
+        ram = ram / static_cast<float>(1000);
+    }
+    else if (units == "B")
+    {
+        ram = ram / static_cast<float>(1000000);
+    }
+    return std::to_string(ram);
 }
 
 string LinuxParser::Uid(int pid)
 {
     std::string file_path, foo, uid;
-    file_path = kProcDirectory + "/" + std::to_string(pid) + kStatusFilename;
+    file_path = kProcDirectory + std::to_string(pid) + kStatusFilename;
     from[file_path].update().ReadLines(8).ReadLine(foo, uid);
 
     return uid;

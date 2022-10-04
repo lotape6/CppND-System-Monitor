@@ -26,7 +26,7 @@ float Process::CpuUtilization()
     long uptime = parser_.UpTime();
     float Hz = static_cast<float>(parser_.Hz());
 
-    cached_cpu = 100 * (static_cast<float>(activeJiffies / Hz) / uptime);
+    cached_cpu = static_cast<float>(activeJiffies / Hz) / uptime;
     return cached_cpu;
 }
 
@@ -47,7 +47,7 @@ string Process::User()
 
 long int Process::UpTime()
 {
-    return parser_.UpTime(pid_);
+    return parser_.UpTime() - parser_.UpTime(pid_);
 }
 
 bool Process::operator<(Process const &a) const

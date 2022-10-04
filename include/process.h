@@ -18,7 +18,6 @@ class Process
     std::string Ram();
     long int UpTime();
     bool operator<(Process const &a) const;
-
     float cached_cpu;
 
   private:

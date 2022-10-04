@@ -15,7 +15,7 @@
 template <typename T>
 void MagicRead(std::istringstream& i, T &t)
 {
-    i >> t;
+    i >>  t;
 }
 
 template<typename T, typename... Args>
@@ -55,7 +55,7 @@ class FileReader
         }
         else
         {
-            // assert(false);
+            file_stream_ = std::ifstream(file_path_);
         }
         return *this;
     }
