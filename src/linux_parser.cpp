@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <dirent.h>
 #include <filesystem>
+#include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -74,6 +75,7 @@ vector<int> LinuxParser::Pids()
         }
     }
     closedir(directory);
+    std::reverse(pids.begin(), pids.end());
     return pids;
 }
 
@@ -197,7 +199,10 @@ string LinuxParser::Ram(int pid)
     {
         ram = ram / static_cast<float>(1000000);
     }
-    return std::to_string(ram);
+    // from: https://stackoverflow.com/a/29200671
+    std::stringstream stream;
+    stream << std::fixed << std::setprecision(2) << ram;
+    return stream.str();
 }
 
 string LinuxParser::Uid(int pid)
